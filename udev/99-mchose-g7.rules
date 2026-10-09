@@ -1,0 +1,13 @@
+# MCHOSE G7 (YJX vendor 0x2255) - let the logged-in desktop user talk to the
+# vendor HID collection without root.
+#
+# Install to /etc/udev/rules.d/99-mchose-g7.rules, then run:
+#     sudo udevadm control --reload-rules && sudo udevadm trigger
+# and reconnect the mouse/dongle.
+#
+# 0xA8A5 is the 2.4 GHz receiver, 0xA8A4 the mouse when plugged in over USB.
+# TAG+="uaccess" grants the active seat access; MODE/GROUP are a fallback for
+# setups without systemd-logind seat management.
+
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="a8a5", ATTRS{idProduct}=="2255", MODE="0660", GROUP="input", TAG+="uaccess"
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="a8a4", ATTRS{idProduct}=="2255", MODE="0660", GROUP="input", TAG+="uaccess"

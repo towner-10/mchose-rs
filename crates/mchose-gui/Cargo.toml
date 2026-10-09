@@ -1,0 +1,19 @@
+[package]
+name = "mchose-gui"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description.workspace = true
+
+[[bin]]
+name = "mchose-gui"
+path = "src/main.rs"
+
+[dependencies]
+mchose-core = { workspace = true }
+gpui = { workspace = true }
+
+# libc is pulled in transitively by gpui; the workspace pins it to the last
+# version that still defines ENOATTR on Linux (see the workspace Cargo.toml).
+[target.'cfg(unix)'.dependencies]
+libc = { workspace = true }

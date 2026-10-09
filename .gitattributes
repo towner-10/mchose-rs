@@ -1,0 +1,10 @@
+# Normalise line endings to LF in the repository, checkout as-is.
+* text=auto eol=lf
+
+# Generated Rust lockfile: keep it tracked, but don't try to diff it as text.
+Cargo.lock -diff
+
+# Binary assets (none yet) should never be normalised.
+*.png binary
+*.jpg binary
+*.ico binary

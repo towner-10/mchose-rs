@@ -1,0 +1,13 @@
+[package]
+name = "mchose-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description.workspace = true
+
+[[bin]]
+name = "mchose"
+path = "src/main.rs"
+
+[dependencies]
+mchose-core = { workspace = true }

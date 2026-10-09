@@ -1,0 +1,25 @@
+[workspace]
+resolver = "3"
+members = [
+    "crates/mchose-core",
+    "crates/mchose-cli",
+    "crates/mchose-gui",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+description = "Unofficial Linux control for the MCHOSE G7 gaming mouse (battery + DPI)"
+
+[workspace.dependencies]
+mchose-core = { path = "crates/mchose-core" }
+gpui = "0.2.2"
+
+# Pin libc: 0.2.181+ dropped ENOATTR on Linux, which breaks xattr 0.2.3
+# (pulled in transitively by gpui -> gpui_http_client -> zed-async-tar).
+libc = "=0.2.180"
+
+[profile.release]
+lto = true
+strip = true
