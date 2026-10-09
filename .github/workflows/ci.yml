@@ -32,6 +32,8 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - run: cargo build -p mchose-cli --release --locked
+      - name: Test
+        run: cargo test -p mchose-core -p mchose-cli --locked
       - name: Smoke test
         run: |
           ./target/release/mchose --version
