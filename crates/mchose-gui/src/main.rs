@@ -220,25 +220,27 @@ impl MouseApp {
         let (upd_tx, upd_rx) = mpsc::channel();
         spawn_worker(req_rx, upd_tx);
 
-        cx.spawn(async move |this, cx| loop {
-            cx.background_executor()
-                .timer(Duration::from_millis(150))
-                .await;
+        cx.spawn(async move |this, cx| {
             loop {
-                match upd_rx.try_recv() {
-                    Ok(update) => {
-                        if this
-                            .update(cx, |this, cx| {
-                                this.on_update(update);
-                                cx.notify();
-                            })
-                            .is_err()
-                        {
-                            return;
+                cx.background_executor()
+                    .timer(Duration::from_millis(150))
+                    .await;
+                loop {
+                    match upd_rx.try_recv() {
+                        Ok(update) => {
+                            if this
+                                .update(cx, |this, cx| {
+                                    this.on_update(update);
+                                    cx.notify();
+                                })
+                                .is_err()
+                            {
+                                return;
+                            }
                         }
+                        Err(TryRecvError::Empty) => break,
+                        Err(TryRecvError::Disconnected) => return,
                     }
-                    Err(TryRecvError::Empty) => break,
-                    Err(TryRecvError::Disconnected) => return,
                 }
             }
         })
@@ -373,18 +375,8 @@ fn title_bar(snapshot: Option<&Snapshot>) -> impl IntoElement {
                 .items_center()
                 .gap_3()
                 .child(div().size(px(8.)).rounded_full().bg(rgb(dot)))
-                .child(
-                    div()
-                        .text_sm()
-                        .font_weight(FontWeight::BOLD)
-                        .child(name),
-                )
-                .child(
-                    div()
-                        .text_xs()
-                        .text_color(rgb(TEXT_MUTED))
-                        .child(detail),
-                ),
+                .child(div().text_sm().font_weight(FontWeight::BOLD).child(name))
+                .child(div().text_xs().text_color(rgb(TEXT_MUTED)).child(detail)),
         )
         .child(
             div()
@@ -499,25 +491,19 @@ fn battery_card(s: &Snapshot) -> impl IntoElement {
 }
 
 fn dpi_card(s: &Snapshot, config: &Config, cx: &mut Context<MouseApp>) -> impl IntoElement {
-    let mut card = card()
-        .child(
-            div()
-                .flex()
-                .items_center()
-                .justify_between()
-                .child(section_label("DPI stages"))
-                .child(
-                    div()
-                        .text_xs()
-                        .text_color(rgb(TEXT_MUTED))
-                        .child(format!(
-                            "active {} of {}   ·   max {}",
-                            config.active_index + 1,
-                            config.dpi_count,
-                            s.max_dpi
-                        )),
-                ),
-        );
+    let mut card = card().child(
+        div()
+            .flex()
+            .items_center()
+            .justify_between()
+            .child(section_label("DPI stages"))
+            .child(div().text_xs().text_color(rgb(TEXT_MUTED)).child(format!(
+                "active {} of {}   ·   max {}",
+                config.active_index + 1,
+                config.dpi_count,
+                s.max_dpi
+            ))),
+    );
 
     for stage in 0..6usize {
         card = card.child(dpi_row(s, config, stage, cx));
@@ -627,7 +613,9 @@ fn dpi_bar(
         };
         bar = bar.child(
             div()
-                .id(ElementId::Name(SharedString::from(format!("seg-{stage}-{i}"))))
+                .id(ElementId::Name(SharedString::from(format!(
+                    "seg-{stage}-{i}"
+                ))))
                 .flex_1()
                 .h_full()
                 .rounded_sm()
@@ -650,14 +638,10 @@ fn rate_card(config: &Config, cx: &mut Context<MouseApp>) -> impl IntoElement {
             &format!("rate-{hz}"),
             &format!("{hz} Hz"),
             selected,
-            cx.listener(move |this, _: &ClickEvent, _, _| {
-                this.send(Request::SetRate(index as u8))
-            }),
+            cx.listener(move |this, _: &ClickEvent, _, _| this.send(Request::SetRate(index as u8))),
         ));
     }
-    card()
-        .child(section_label("Report rate"))
-        .child(row)
+    card().child(section_label("Report rate")).child(row)
 }
 
 fn lod_card(config: &Config, cx: &mut Context<MouseApp>) -> impl IntoElement {
@@ -668,14 +652,10 @@ fn lod_card(config: &Config, cx: &mut Context<MouseApp>) -> impl IntoElement {
             &format!("lod-{mm}"),
             &format!("{mm} mm"),
             selected,
-            cx.listener(move |this, _: &ClickEvent, _, _| {
-                this.send(Request::SetLod(index as u8))
-            }),
+            cx.listener(move |this, _: &ClickEvent, _, _| this.send(Request::SetLod(index as u8))),
         ));
     }
-    card()
-        .child(section_label("Lift-off distance"))
-        .child(row)
+    card().child(section_label("Lift-off distance")).child(row)
 }
 
 fn footer(cx: &mut Context<MouseApp>) -> impl IntoElement {

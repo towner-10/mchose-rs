@@ -1,0 +1,57 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  release:
+    name: build and publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Install GPUI system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            clang cmake pkg-config \
+            libvulkan-dev \
+            libxkbcommon-dev libxkbcommon-x11-dev \
+            libwayland-dev wayland-protocols \
+            libx11-dev libx11-xcb-dev \
+            libxcb1-dev libxcb-randr0-dev libxcb-xfixes0-dev \
+            libxcb-shm0-dev libxcb-keysyms1-dev libxcb-cursor-dev \
+            libfontconfig1-dev libfreetype6-dev \
+            libssl-dev
+      - name: Build
+        run: cargo build --workspace --release --locked
+      - name: Package
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME}"
+          target="x86_64-unknown-linux-gnu"
+          mkdir -p dist
+
+          for bin in mchose mchose-gui; do
+            pkg="pkg/${bin}"
+            mkdir -p "${pkg}/udev"
+            cp "target/release/${bin}" "${pkg}/"
+            cp README.md LICENSE "${pkg}/"
+            cp udev/99-mchose-g7.rules "${pkg}/udev/"
+            tar -C pkg -czf "dist/${bin}-${version}-${target}.tar.gz" "${bin}"
+          done
+
+          ls -l dist
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.tar.gz
+          generate_release_notes: true
